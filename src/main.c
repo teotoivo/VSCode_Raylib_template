@@ -20,6 +20,12 @@
 ********************************************************************************************/
 #include "raylib.h"
 
+
+
+
+#include <stdio.h>                  // Required for: fopen(), fclose(), fputc(), fwrite(), printf(), fprintf(), funopen()
+#include <time.h>                   // Required for: time_t, tm, time(), localtime(), strftime()
+
 #if defined(PLATFORM_WEB)
     #include <emscripten/emscripten.h>
 #endif
@@ -83,7 +89,6 @@ static void UpdateDrawFrame(void)
     //----------------------------------------------------------------------------------
     UpdateCamera(&camera, CAMERA_ORBITAL);
     //----------------------------------------------------------------------------------
-
     // Draw
     //----------------------------------------------------------------------------------
     BeginDrawing();
