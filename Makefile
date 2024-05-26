@@ -213,7 +213,7 @@ endif
 #  -Wno-missing-braces  ignore invalid warning (GCC bug 53119)
 #  -Wno-unused-value    ignore unused return values of some functions (i.e. fread())
 #  -D_DEFAULT_SOURCE    use with -std=c99 on Linux and PLATFORM_WEB, required for timespec
-CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wunused-result -D_DEFAULT_SOURCE
+CFLAGS = -std=c99 -Wall -Wno-missing-braces -Wunused-result -D_DEFAULT_SOURCE -MMD -MP
 
 ifeq ($(BUILD_MODE),DEBUG)
     CFLAGS += -g -D_DEBUG
@@ -398,46 +398,38 @@ ifeq ($(PLATFORM),PLATFORM_WEB)
 endif
 
 # Define source and include directories
-SRC_DIR               ?= src
-INCLUDE_DIR           ?= $(SRC_DIR)
+SRC_DIR ?= src
+INCLUDE_DIR ?= $(SRC_DIR)
 
-
-# Define source code object files required
-#------------------------------------------------------------------------------------------------
-PROJECT_SOURCE_FILES ?= \
-    $(SRC_DIR)/main.c \
-    $(SRC_DIR)/player.c
-
-    
+# Automatically detect and list all .c files in SRC_DIR
+PROJECT_SOURCE_FILES := $(wildcard $(SRC_DIR)/*.c)
 
 # Define all object files from source files
 OBJS = $(patsubst %.c, %.o, $(PROJECT_SOURCE_FILES))
 
-
-# Define processes to execute
-#------------------------------------------------------------------------------------------------
-# For Android platform we call a custom Makefile.Android
-ifeq ($(PLATFORM),PLATFORM_ANDROID)
-    MAKEFILE_PARAMS = -f Makefile.Android
-    export PROJECT_NAME
-    export PROJECT_SOURCE_FILES
-else
-    MAKEFILE_PARAMS = $(PROJECT_NAME)
-endif
+# Dependency files
+DEPS = $(OBJS:.o=.d)
 
 # Default target entry
-# NOTE: We call this Makefile target or Makefile.Android target
-all:
-	$(MAKE) $(MAKEFILE_PARAMS)
+all: $(PROJECT_NAME)
 
 # Project target defined by PROJECT_NAME
 $(PROJECT_NAME): $(OBJS)
+	@echo "Linking object files into $(PROJECT_NAME)..."
 	$(CC) -o $(PROJECT_NAME)$(EXT) $(OBJS) $(CFLAGS) $(INCLUDE_PATHS) $(LDFLAGS) $(LDLIBS) -D$(PLATFORM)
 
 # Compile source files
-# NOTE: This pattern will compile every module defined on $(OBJS)
-%.o: %.c
+$(SRC_DIR)/%.o: $(SRC_DIR)/%.c
+	@echo "Compiling $< to $@..."
 	$(CC) -c $< -o $@ $(CFLAGS) $(INCLUDE_PATHS) -D$(PLATFORM)
+
+-include $(DEPS)
+
+# Debugging information
+$(info SRC_DIR: $(SRC_DIR))
+$(info PROJECT_SOURCE_FILES: $(PROJECT_SOURCE_FILES))
+$(info OBJS: $(OBJS))
+$(info DEPS: $(DEPS))
 
 run:
 	$(MAKE) $(MAKEFILE_PARAMS)
@@ -464,31 +456,30 @@ clean_shell_sh:
 ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
-		rm -fv *.o
+		rm -fv *.o *.d
     endif
     ifeq ($(PLATFORM_OS),OSX)
 		find . -type f -perm +ugo+x -delete
-		rm -f *.o
+		rm -f *.o *.d
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	find . -type f -executable -delete
-	rm -fv *.o
+	rm -fv *.o *.d
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
-	rm -fv *.o
+	rm -fv *.o *.d
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),LINUX)
-		rm -fv *.o $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+		rm -fv *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
     ifeq ($(PLATFORM_OS),OSX)
-		rm -f *.o $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+		rm -f *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
 endif
 
-# Set specific target variable
 clean_shell_cmd: SHELL=cmd
 clean_shell_cmd:
-	del *.o *.exe $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm /s
+	del /f /q *.o *.d *.exe $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
