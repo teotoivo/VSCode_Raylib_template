@@ -370,6 +370,14 @@ $(info PROJECT_SOURCE_FILES: $(PROJECT_SOURCE_FILES))
 $(info OBJS: $(OBJS))
 $(info DEPS: $(DEPS))
 
+-include $(DEPS)
+
+# Debugging information
+$(info SRC_DIR: $(SRC_DIR))
+$(info PROJECT_SOURCE_FILES: $(PROJECT_SOURCE_FILES))
+$(info OBJS: $(OBJS))
+$(info DEPS: $(DEPS))
+
 run:
 	$(MAKE) $(MAKEFILE_PARAMS)
 
@@ -396,29 +404,37 @@ ifeq ($(PLATFORM),PLATFORM_DESKTOP)
     ifeq ($(PLATFORM_OS),LINUX)
 		find . -type f -executable -delete
 		rm -fv *.o *.d
+		rm -fv *.o *.d
     endif
     ifeq ($(PLATFORM_OS),OSX)
 		find . -type f -perm +ugo+x -delete
+		rm -f *.o *.d
 		rm -f *.o *.d
     endif
 endif
 ifeq ($(PLATFORM),PLATFORM_RPI)
 	find . -type f -executable -delete
 	rm -fv *.o *.d
+	rm -fv *.o *.d
 endif
 ifeq ($(PLATFORM),PLATFORM_DRM)
 	find . -type f -executable -delete
+	rm -fv *.o *.d
 	rm -fv *.o *.d
 endif
 ifeq ($(PLATFORM),PLATFORM_WEB)
     ifeq ($(PLATFORM_OS),LINUX)
 		rm -fv *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+		rm -fv *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
     ifeq ($(PLATFORM_OS),OSX)
+		rm -f *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
 		rm -f *.o *.d $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
     endif
 endif
 
 clean_shell_cmd: SHELL=cmd
 clean_shell_cmd:
+	del /f /q *.o *.d *.exe $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
+
 	del /f /q *.o *.d *.exe $(PROJECT_NAME).data $(PROJECT_NAME).html $(PROJECT_NAME).js $(PROJECT_NAME).wasm
